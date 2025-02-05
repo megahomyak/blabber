@@ -1,0 +1,9 @@
+#!/bin/sh
+ssh -T orange << EOF
+cd blabber
+git pull
+cd server
+docker rm --force blabber
+docker build . -t blabber
+sudo docker run -d -p 8011:80 --name blabber --restart unless-stopped blabber
+EOF

@@ -1,0 +1,7 @@
+room name\test
+self name\test
+server handle\handle
+.
+\username\datetime\last_message_id
+abc
+def
