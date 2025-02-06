@@ -1,8 +1,5 @@
-FROM alpine:3.21.2 AS build
-RUN apk add --no-cache curl
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --target x86_64-unknown-linux-musl
-ENV PATH=/root/.cargo/bin:$PATH
-RUN echo $PATH
+FROM rust:1.84.1-alpine3.21 AS build
+RUN apk add --no-cache musl-dev
 COPY Cargo.lock Cargo.toml .
 RUN mkdir src && echo 'fn main(){}' > src/main.rs
 RUN cargo build --release --target=x86_64-unknown-linux-musl
@@ -11,5 +8,5 @@ COPY . .
 RUN cargo build --release --target=x86_64-unknown-linux-musl
 
 FROM scratch
-COPY --from=build /app/target/release/server /app
+COPY --from=build /app/target/x86_64-unknown-linux-musl/release/server /app
 CMD ["/app"]

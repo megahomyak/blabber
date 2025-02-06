@@ -149,7 +149,8 @@ fn main() {
         }))
         .send()
         .expect("connection to the server should work");
-    let resp: ServerResponse = resp.json().unwrap();
+    let resp = resp.text().unwrap();
+    let resp: ServerResponse = serde_json::from_str(&resp).unwrap_or_else(|_| panic!("Unexpected server response: {}", resp));
     if resp.new_messages.is_empty() && resp.self_message_success.is_none() {
         return;
     }
