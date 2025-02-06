@@ -1,7 +1,7 @@
 #!/bin/bash -e
 ssh orange << EOF
 if ! [ -d blabber ]; then
-    git clone git@github.com:megahomyak/blabber.git
+    git clone https://github.com/megahomyak/blabber.git
 fi
 cd blabber
 git pull
