@@ -1,5 +1,5 @@
 #!/bin/bash -e
-ssh orange << EOF
+ssh $(cat ssh_args) << EOF
 if ! [ -d blabber ]; then
     git clone https://github.com/megahomyak/blabber.git
 fi
