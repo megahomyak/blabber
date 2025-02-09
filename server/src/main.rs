@@ -21,6 +21,7 @@ fn main() {
     .unwrap();
     let ass = std::sync::Mutex::new(ass);
     rouille::start_server("0.0.0.0:80", move |request| {
+        println!("{}", ass.try_lock().is_ok());
         let mut data = String::new();
         request.data().unwrap().read_to_string(&mut data).unwrap();
         let request: Request = serde_json::from_str(&data).unwrap();
