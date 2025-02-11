@@ -36,8 +36,9 @@ struct Room {
 }
 fn read_room(file_path: &str) -> Room {
     let room = std::fs::read_to_string(file_path).expect("room file name should be present");
+    let room = room.replace("\r\n", "\n");
     let mut config = Node::new();
-    let mut lines = room.lines();
+    let mut lines = room.split('\n');
     loop {
         let Some(mut line) = lines.next() else {
             panic!("Room config should end with a dot line");
@@ -47,7 +48,7 @@ fn read_room(file_path: &str) -> Room {
             break;
         }
         if line != "" {
-            config.populate(line.split('\\'))
+            config.populate(line.split('\\'));
         }
     }
     let mut self_message_lines = Vec::new();
@@ -62,6 +63,7 @@ fn read_room(file_path: &str) -> Room {
             let mut parts = data.split('\\');
             let _username = parts.next().unwrap();
             let _datetime = parts.next().unwrap();
+            let _message_id = parts.next().unwrap();
             last_message_id = Some(parts.next().unwrap().to_owned().parse().unwrap());
             break;
         }
@@ -120,6 +122,7 @@ fn write_msg<'a>(
     msg_id: u64,
     utc_unix_timestamp: i64,
     sender_name: &str,
+    last_msg_id: u64,
 ) {
     use std::io::Write;
     for line in lines {
@@ -127,7 +130,15 @@ fn write_msg<'a>(
     }
     let utc = chrono::DateTime::<chrono::Utc>::from_timestamp(utc_unix_timestamp, 0).unwrap();
     let local = utc.with_timezone(&chrono::Local);
-    writeln!(f, "\\{}\\{}\\{}", sender_name, local.to_rfc2822(), msg_id).unwrap();
+    writeln!(
+        f,
+        "\\{}\\{}\\{}\\{}",
+        sender_name,
+        local.to_rfc2822(),
+        msg_id,
+        last_msg_id
+    )
+    .unwrap();
 }
 
 fn main() {
@@ -150,7 +161,8 @@ fn main() {
         .send()
         .expect("connection to the server should work");
     let resp = resp.text().unwrap();
-    let resp: ServerResponse = serde_json::from_str(&resp).unwrap_or_else(|_| panic!("Unexpected server response: {}", resp));
+    let resp: ServerResponse = serde_json::from_str(&resp)
+        .unwrap_or_else(|_| panic!("Unexpected server response: {}", resp));
     if resp.new_messages.is_empty() && resp.self_message_success.is_none() {
         return;
     }
@@ -158,15 +170,19 @@ fn main() {
         use std::io::Write;
         write!(room_file, "\n").unwrap();
     }
-    if let Some(s) = resp.self_message_success {
+    let self_message_id = if let Some(self_message_success) = resp.self_message_success {
         write_msg(
             &mut room_file,
             std::iter::empty(),
-            s.id,
-            s.utc_unix_timestamp,
+            self_message_success.id,
+            self_message_success.utc_unix_timestamp,
             &room.self_name,
+            self_message_success.id,
         );
-    }
+        Some(self_message_success.id)
+    } else {
+        None
+    };
     for new_message in resp.new_messages {
         write_msg(
             &mut room_file,
@@ -174,6 +190,7 @@ fn main() {
             new_message.id,
             new_message.utc_unix_timestamp,
             &new_message.sender_name,
+            self_message_id.unwrap_or(new_message.id),
         );
     }
 }
