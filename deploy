@@ -1,12 +1,18 @@
 #!/bin/bash -e
-ssh $(cat ssh_args) << EOF
-if ! [ -d blabber ]; then
-    git clone https://github.com/megahomyak/blabber.git
-fi
-cd blabber
-git pull -f --rebase
+SSH_KEY_PATH=~/.ssh/id_rsa
+SSH_CONFIG_PATH=~/.ssh/config
+HOST="$(cat host)"
+sudo bash -e << EOF
 cd server
+docker build --progress=plain . -t blabber
+docker save blabber -o blabber.tar
+scp -F $SSH_CONFIG_PATH -i $SSH_KEY_PATH blabber.tar $HOST:blabber/blabber.tar
+rm -f blabber.tar
+ssh -F $SSH_CONFIG_PATH -i $SSH_KEY_PATH $HOST << EOF2
 docker rm --force blabber
-docker build . -t blabber
+cd blabber
+docker load -i blabber.tar
 docker run -d -p 8011:80 --name blabber --restart unless-stopped blabber
+EOF2
+docker image rm blabber
 EOF
