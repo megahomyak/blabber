@@ -4,7 +4,7 @@ if ! [ -d blabber ]; then
     git clone https://github.com/megahomyak/blabber.git
 fi
 cd blabber
-git pull
+git pull -f
 cd server
 docker rm --force blabber
 docker build . -t blabber
