@@ -21,7 +21,7 @@ fn main() {
     .unwrap();
     let ass = std::sync::Mutex::new(ass);
     let server = rouille::Server::new("0.0.0.0:80", move |request| {
-        println!("{}", ass.try_lock().is_ok());
+        println!("{:?}", ass.try_lock().map(|_ass| ()));
         let mut ass = ass.lock().unwrap();
         let mut data = String::new();
         request.data().unwrap().read_to_string(&mut data).unwrap();
@@ -67,6 +67,7 @@ fn main() {
                 "id": new_message_id,
             }));
         }
+        drop(ass);
         rouille::Response::text(
             serde_json::json!({
                 "self_message_success": self_message_success,
