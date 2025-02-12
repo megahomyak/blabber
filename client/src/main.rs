@@ -163,10 +163,9 @@ fn main() {
     let resp = resp.text().unwrap();
     let resp: ServerResponse = serde_json::from_str(&resp)
         .unwrap_or_else(|_| panic!("Unexpected server response: {}", resp));
-    if resp.new_messages.is_empty() && resp.self_message_success.is_none() {
-        return;
-    }
-    if !room.ends_with_newline {
+    if (!resp.new_messages.is_empty() || !resp.self_message_success.is_none())
+        && !room.ends_with_newline
+    {
         use std::io::Write;
         write!(room_file, "\n").unwrap();
     }
