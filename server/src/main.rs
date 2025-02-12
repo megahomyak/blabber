@@ -21,6 +21,7 @@ fn main() {
     .unwrap();
     let ass = std::sync::Mutex::new(ass);
     let server = rouille::Server::new("0.0.0.0:80", move |request| {
+        ass.clear_poison();
         let mut ass = ass.lock().unwrap();
         let mut data = String::new();
         request.data().unwrap().read_to_string(&mut data).unwrap();
