@@ -171,6 +171,7 @@ fn main() {
         write!(room_file, "\n").unwrap();
     }
     let self_message_id = if let Some(self_message_success) = resp.self_message_success {
+        println!("Sent your own message");
         write_msg(
             &mut room_file,
             std::iter::empty(),
@@ -183,6 +184,7 @@ fn main() {
     } else {
         None
     };
+    println!("Received {} new messages", resp.new_messages.len());
     for new_message in resp.new_messages {
         write_msg(
             &mut room_file,
